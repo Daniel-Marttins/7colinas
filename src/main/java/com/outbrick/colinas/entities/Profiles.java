@@ -37,6 +37,7 @@ public class Profiles {
     private byte[] profileImage;
     private String profileDescription;
     private String profileProfession;
+    private String profileOccupationArea;
     @Lob
     private byte[] profileCV;
     private List<String> profileProfessionalExperiences = new ArrayList<>();

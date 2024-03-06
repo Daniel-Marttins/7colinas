@@ -47,7 +47,7 @@ public class ProfilesController {
         return ResponseEntity.badRequest().body("Ainda não existe perfis cadastrados no sistema!"); 
     }
 
-    @RequestMapping(value = "/find/login")
+    @RequestMapping(value = "/find/login", method = RequestMethod.POST)
     public ResponseEntity<?> findProfileByLogin(@RequestBody Map<String, String> profileLogin) {
         ProfilesDTO getProfile = profilesService.findProfileByLogin(
             profileLogin.get("profileEmail"), 
