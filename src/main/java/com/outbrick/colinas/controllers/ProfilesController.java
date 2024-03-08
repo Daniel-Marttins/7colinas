@@ -1,5 +1,6 @@
 package com.outbrick.colinas.controllers;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,7 @@ public class ProfilesController {
             if (addProfile != null) return ResponseEntity.ok().body(addProfile);
             else return ResponseEntity.badRequest().body("Um perfil com esse email, já existe no nosso banco de talentos!");
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().body("Não foi possível adicionar seu perfil. Tente novamente mais tarde.");
         }
     }

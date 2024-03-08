@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -27,8 +29,7 @@ public class ProfilesService {
     */
     public String encryptPassword(String profilePassword) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String encodedPassword = passwordEncoder.encode(profilePassword);
-        return encodedPassword;
+        return passwordEncoder.encode(profilePassword);
     }
 
     /*
@@ -73,6 +74,7 @@ public class ProfilesService {
          * CONVERTENDO A IMAGEM EM BASE64 RECEBIDA ATRAVÉS DO @JSON EM UM ARRAY DE BYTES[]
          * CONVERTING THE BASE64 IMAGE RECEIVED THROUGH @JSON INTO AN ARRAY OF BYTES[]
          */
+
         if (profiles.getProfileImage() != null) {
             profiles.setProfileImage(Base64.getDecoder().decode(profiles.getProfileImage()));
         }
@@ -105,7 +107,7 @@ public class ProfilesService {
             lastAddedProfile.getProfileInstagram(), 
             lastAddedProfile.getProfileLinkedin(), 
             lastAddedProfile.getProfileOtherSocialMedia(),
-            lastAddedProfile.getProfileImage(), 
+            lastAddedProfile.getProfileImage(),
             lastAddedProfile.getProfileDescription(), 
             lastAddedProfile.getProfileProfession(),
             lastAddedProfile.getProfileOccupationArea(),
@@ -126,36 +128,33 @@ public class ProfilesService {
      */
     public ProfilesDTO getProfilesById(Long profileId) {
         Optional<Profiles> getProfile = profileRepository.findById(profileId);
-        if(getProfile.isPresent()) {
-            return new ProfilesDTO(
-                getProfile.get().getProfileId(), 
-                getProfile.get().getProfileName(), 
-                getProfile.get().getProfileBirthday(),
-                getProfile.get().getProfileCreateAt(),
-                getProfile.get().getProfileStatus(),
-                getProfile.get().getProfileTag(),
-                getProfile.get().getProfilePassword(),
-                getProfile.get().getProfileEmail(), 
-                getProfile.get().getProfilePhoneNumber(), 
-                getProfile.get().getProfileInstagram(), 
-                getProfile.get().getProfileLinkedin(), 
-                getProfile.get().getProfileOtherSocialMedia(), 
-                getProfile.get().getProfileImage(), 
-                getProfile.get().getProfileDescription(), 
-                getProfile.get().getProfileProfession(),
-                getProfile.get().getProfileOccupationArea(),
-                getProfile.get().getProfileCV(), 
-                getProfile.get().getProfileProfessionalExperiences(), 
-                getProfile.get().getProfileEducations(), 
-                getProfile.get().getProfileSkills(), 
-                getProfile.get().getProfileState(), 
-                getProfile.get().getProfileCity(), 
-                getProfile.get().getProfileAddress(), 
-                getProfile.get().getProfileGender()
-            );
-        }
+        return getProfile.map(profiles -> new ProfilesDTO(
+                profiles.getProfileId(),
+                profiles.getProfileName(),
+                profiles.getProfileBirthday(),
+                profiles.getProfileCreateAt(),
+                profiles.getProfileStatus(),
+                profiles.getProfileTag(),
+                profiles.getProfilePassword(),
+                profiles.getProfileEmail(),
+                profiles.getProfilePhoneNumber(),
+                profiles.getProfileInstagram(),
+                profiles.getProfileLinkedin(),
+                profiles.getProfileOtherSocialMedia(),
+                profiles.getProfileImage(),
+                profiles.getProfileDescription(),
+                profiles.getProfileProfession(),
+                profiles.getProfileOccupationArea(),
+                profiles.getProfileCV(),
+                profiles.getProfileProfessionalExperiences(),
+                profiles.getProfileEducations(),
+                profiles.getProfileSkills(),
+                profiles.getProfileState(),
+                profiles.getProfileCity(),
+                profiles.getProfileAddress(),
+                profiles.getProfileGender()
+        )).orElse(null);
 
-        return null;
     }
 
     /*
@@ -163,37 +162,33 @@ public class ProfilesService {
      * RETURNING THE LIST OF ALL REGISTERED USERS
      */
     public List<ProfilesDTO> getAllProfiles() {
-        List<ProfilesDTO> allProfiles = profileRepository.findAll().stream()
-            .map(profiles -> {
-                return new ProfilesDTO(
-                    profiles.getProfileId(), 
-                    profiles.getProfileName(), 
-                    profiles.getProfileBirthday(),
-                    profiles.getProfileCreateAt(),
-                    profiles.getProfileStatus(),
-                    profiles.getProfileTag(),
-                    profiles.getProfilePassword(),
-                    profiles.getProfileEmail(), 
-                    profiles.getProfilePhoneNumber(), 
-                    profiles.getProfileInstagram(), 
-                    profiles.getProfileLinkedin(), 
-                    profiles.getProfileOtherSocialMedia(), 
-                    profiles.getProfileImage(), 
-                    profiles.getProfileDescription(), 
-                    profiles.getProfileProfession(),
-                    profiles.getProfileOccupationArea(),
-                    profiles.getProfileCV(), 
-                    profiles.getProfileProfessionalExperiences(), 
-                    profiles.getProfileEducations(), 
-                    profiles.getProfileSkills(), 
-                    profiles.getProfileState(), 
-                    profiles.getProfileCity(), 
-                    profiles.getProfileAddress(), 
-                    profiles.getProfileGender()
-                );
-        }).collect(Collectors.toList());
-
-        return allProfiles;  
+        return profileRepository.findAll().stream()
+            .map(profiles -> new ProfilesDTO(
+                profiles.getProfileId(),
+                profiles.getProfileName(),
+                profiles.getProfileBirthday(),
+                profiles.getProfileCreateAt(),
+                profiles.getProfileStatus(),
+                profiles.getProfileTag(),
+                profiles.getProfilePassword(),
+                profiles.getProfileEmail(),
+                profiles.getProfilePhoneNumber(),
+                profiles.getProfileInstagram(),
+                profiles.getProfileLinkedin(),
+                profiles.getProfileOtherSocialMedia(),
+                profiles.getProfileImage(),
+                profiles.getProfileDescription(),
+                profiles.getProfileProfession(),
+                profiles.getProfileOccupationArea(),
+                profiles.getProfileCV(),
+                profiles.getProfileProfessionalExperiences(),
+                profiles.getProfileEducations(),
+                profiles.getProfileSkills(),
+                profiles.getProfileState(),
+                profiles.getProfileCity(),
+                profiles.getProfileAddress(),
+                profiles.getProfileGender()
+            )).collect(Collectors.toList());
     }
 
     /*
@@ -206,36 +201,33 @@ public class ProfilesService {
         if (validBeforeUpdate) return null;
 
         Optional<Profiles> getProfile = updateProfiles(profileTag, updatedProfile);
-        if(getProfile.isPresent()) {
-            return new ProfilesDTO(
-                getProfile.get().getProfileId(), 
-                getProfile.get().getProfileName(), 
-                getProfile.get().getProfileBirthday(),
-                getProfile.get().getProfileCreateAt(),
-                getProfile.get().getProfileStatus(),
-                getProfile.get().getProfileTag(),
-                getProfile.get().getProfilePassword(),
-                getProfile.get().getProfileEmail(), 
-                getProfile.get().getProfilePhoneNumber(), 
-                getProfile.get().getProfileInstagram(), 
-                getProfile.get().getProfileLinkedin(), 
-                getProfile.get().getProfileOtherSocialMedia(), 
-                getProfile.get().getProfileImage(), 
-                getProfile.get().getProfileDescription(), 
-                getProfile.get().getProfileProfession(),
-                getProfile.get().getProfileOccupationArea(),
-                getProfile.get().getProfileCV(), 
-                getProfile.get().getProfileProfessionalExperiences(), 
-                getProfile.get().getProfileEducations(), 
-                getProfile.get().getProfileSkills(), 
-                getProfile.get().getProfileState(), 
-                getProfile.get().getProfileCity(), 
-                getProfile.get().getProfileAddress(), 
-                getProfile.get().getProfileGender()
-            );
-        }
+        return getProfile.map(profiles -> new ProfilesDTO(
+                profiles.getProfileId(),
+                profiles.getProfileName(),
+                profiles.getProfileBirthday(),
+                profiles.getProfileCreateAt(),
+                profiles.getProfileStatus(),
+                profiles.getProfileTag(),
+                profiles.getProfilePassword(),
+                profiles.getProfileEmail(),
+                profiles.getProfilePhoneNumber(),
+                profiles.getProfileInstagram(),
+                profiles.getProfileLinkedin(),
+                profiles.getProfileOtherSocialMedia(),
+                profiles.getProfileImage(),
+                profiles.getProfileDescription(),
+                profiles.getProfileProfession(),
+                profiles.getProfileOccupationArea(),
+                profiles.getProfileCV(),
+                profiles.getProfileProfessionalExperiences(),
+                profiles.getProfileEducations(),
+                profiles.getProfileSkills(),
+                profiles.getProfileState(),
+                profiles.getProfileCity(),
+                profiles.getProfileAddress(),
+                profiles.getProfileGender()
+        )).orElse(null);
 
-        return null;
     }
 
     /*
@@ -268,7 +260,7 @@ public class ProfilesService {
             
             return profileRepository.save(record);
         });
-        return null;
+        return Optional.empty();
     }
 
     /*
@@ -292,8 +284,8 @@ public class ProfilesService {
                     findProfile.getProfilePhoneNumber(), 
                     findProfile.getProfileInstagram(), 
                     findProfile.getProfileLinkedin(), 
-                    findProfile.getProfileOtherSocialMedia(), 
-                    findProfile.getProfileImage(), 
+                    findProfile.getProfileOtherSocialMedia(),
+                    findProfile.getProfileImage(),
                     findProfile.getProfileDescription(), 
                     findProfile.getProfileProfession(),
                     findProfile.getProfileOccupationArea(),
@@ -318,36 +310,33 @@ public class ProfilesService {
      */
     public ProfilesDTO searchProfileTag(String profileTag) {
         Optional<Profiles> findProfileTag = profileRepository.findProfileByTag(profileTag);
-        if(findProfileTag.isPresent()) {
-            return new ProfilesDTO(
-                findProfileTag.get().getProfileId(), 
-                findProfileTag.get().getProfileName(), 
-                findProfileTag.get().getProfileBirthday(),
-                findProfileTag.get().getProfileCreateAt(),
-                findProfileTag.get().getProfileStatus(),
-                findProfileTag.get().getProfileTag(),
+        return findProfileTag.map(profiles -> new ProfilesDTO(
+                profiles.getProfileId(),
+                profiles.getProfileName(),
+                profiles.getProfileBirthday(),
+                profiles.getProfileCreateAt(),
+                profiles.getProfileStatus(),
+                profiles.getProfileTag(),
                 null,
-                findProfileTag.get().getProfileEmail(), 
-                findProfileTag.get().getProfilePhoneNumber(), 
-                findProfileTag.get().getProfileInstagram(), 
-                findProfileTag.get().getProfileLinkedin(), 
-                findProfileTag.get().getProfileOtherSocialMedia(), 
-                findProfileTag.get().getProfileImage(), 
-                findProfileTag.get().getProfileDescription(), 
-                findProfileTag.get().getProfileProfession(),
-                findProfileTag.get().getProfileOccupationArea(),
-                findProfileTag.get().getProfileCV(), 
-                findProfileTag.get().getProfileProfessionalExperiences(), 
-                findProfileTag.get().getProfileEducations(), 
-                findProfileTag.get().getProfileSkills(), 
-                findProfileTag.get().getProfileState(), 
-                findProfileTag.get().getProfileCity(), 
-                findProfileTag.get().getProfileAddress(), 
-                findProfileTag.get().getProfileGender()
-            );
-        } 
+                profiles.getProfileEmail(),
+                profiles.getProfilePhoneNumber(),
+                profiles.getProfileInstagram(),
+                profiles.getProfileLinkedin(),
+                profiles.getProfileOtherSocialMedia(),
+                profiles.getProfileImage(),
+                profiles.getProfileDescription(),
+                profiles.getProfileProfession(),
+                profiles.getProfileOccupationArea(),
+                profiles.getProfileCV(),
+                profiles.getProfileProfessionalExperiences(),
+                profiles.getProfileEducations(),
+                profiles.getProfileSkills(),
+                profiles.getProfileState(),
+                profiles.getProfileCity(),
+                profiles.getProfileAddress(),
+                profiles.getProfileGender()
+        )).orElse(null);
 
-        return null;
     }
 
     /*
@@ -358,7 +347,6 @@ public class ProfilesService {
      */
     public boolean validProfileBeforeUpdate(String profileEmail, String profileTag) {
         Profiles getExistingProfile = profileRepository.existingProfileBeforeUpdate(profileEmail, profileTag);
-        if(getExistingProfile != null) return true;
-        return false;
+        return getExistingProfile != null;
     }
 }
