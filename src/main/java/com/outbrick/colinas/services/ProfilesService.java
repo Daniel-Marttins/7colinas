@@ -1,7 +1,12 @@
 package com.outbrick.colinas.services;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 
+import com.outbrick.colinas.utils.ImageUtils;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.exception.ContextedRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,12 +17,15 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.zip.DataFormatException;
 
 import com.outbrick.colinas.dtos.ProfilesDTO;
 import com.outbrick.colinas.entities.Profiles;
 import com.outbrick.colinas.repositories.ProfilesRepository;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@RequiredArgsConstructor
 public class ProfilesService {
     
     @Autowired
@@ -59,40 +67,20 @@ public class ProfilesService {
      * SALVAR USUÁRIOS COM BASE NO JSON RECEBIDO E VALIDA SE O USUÁRIO JÁ EXISTE ANTES DE SALVAR, CASO EXISTA ELE RETORNA NULL
      * SAVE USERS BASED ON THE JSON RECEIVED AND VALIDATES IF THE USER ALREADY EXISTS BEFORE SAVING, IF IT EXISTS IT RETURNS NULL
      */
-    public ProfilesDTO saveProfiles(Profiles profiles) {
+    @Transactional
+    public ProfilesDTO saveProfiles(Profiles profiles, MultipartFile profileImage) throws IOException {
         Profiles validProfileExists = profileRepository.existsByProfileEmail(profiles.getProfileEmail());
         if(validProfileExists != null) return null;
 
-        /*
-         * CHAMA OS METODOS PARA ENCRIPTOGRAFAR A SENHA E GERAR A TAG 
-         * CALLS THE METHODS TO ENCRYPTE THE PASSWORD AND GENERATE THE TAG
-         */
+        ImageUtils imageUtils = new ImageUtils();
+
         profiles.setProfilePassword(encryptPassword(profiles.getProfilePassword()));
         profiles.setProfileTag(generateProfileTag(8));
 
-        /*
-         * CONVERTENDO A IMAGEM EM BASE64 RECEBIDA ATRAVÉS DO @JSON EM UM ARRAY DE BYTES[]
-         * CONVERTING THE BASE64 IMAGE RECEIVED THROUGH @JSON INTO AN ARRAY OF BYTES[]
-         */
-
-        if (profiles.getProfileImage() != null) {
-            profiles.setProfileImage(Base64.getDecoder().decode(profiles.getProfileImage()));
-        }
-
-        /*
-         * CONVERTENDO O PDF EM BASE64 RECEBIDO DO @JSON EM UM ARRAY DE BYTE[]
-         * CONVERTING THE BASE64 PDF RECEIVED FROM @JSON INTO A BYTE ARRAY[]
-         */
-        if (profiles.getProfileCV() != null) {
-            profiles.setProfileCV(Base64.getDecoder().decode(profiles.getProfileCV()));
-        }
+        profiles.setProfileImage(imageUtils.compressImage(profileImage.getBytes()));
 
         profileRepository.save(profiles);
 
-        /*
-         * APOS SALVAR JÁ É RETORNANDO UM USUÁRIO EM UM OBJETO DTO, PARA EVITAR CONFLITO DE DESERIALIZAÇÃO NO @JSON
-         * AFTER SAVE, A USER IS ALREADY RETURNED IN A DTO OBJECT, TO AVOID DESERIALISATION CONFLICT IN @JSON
-         */
         Profiles lastAddedProfile = profileRepository.getLastProfileAdded();
         return new ProfilesDTO(
             lastAddedProfile.getProfileId(), 
@@ -176,7 +164,7 @@ public class ProfilesService {
                 profiles.getProfileInstagram(),
                 profiles.getProfileLinkedin(),
                 profiles.getProfileOtherSocialMedia(),
-                profiles.getProfileImage(),
+                downloadImage(profiles.getProfileImage()),
                 profiles.getProfileDescription(),
                 profiles.getProfileProfession(),
                 profiles.getProfileOccupationArea(),
@@ -267,6 +255,7 @@ public class ProfilesService {
      *  BUSCAR USUÁRIO COM BASE EM SUAS INFORMAÇÕES DE CADASTRO COMO EMAIL E SENHA PARA VALIDAR O LOGIN DO USUÁRIO
      * SEARCH FOR USER BASED ON THEIR REGISTRATION INFORMATION SUCH AS EMAIL AND PASSWORD TO VALIDATE THE USER'S LOGIN
      */
+    @Transactional
     public ProfilesDTO findProfileByLogin(String profileEmail, String profilePassword) {
         Profiles findProfile = profileRepository.existsByProfileEmail(profileEmail);
         if(findProfile != null) {
@@ -308,34 +297,38 @@ public class ProfilesService {
      * BUSCAR USUÁRIO ATRAVES DE SUAS TAGS PARA FACILITAR ENCONTRAR DADOS DE OUTROS PROFISSIONAIS
      * SEARCH FOR USERS THROUGH THEIR TAGS TO FACILITATE FINDING DATA FROM OTHER PROFESSIONALS
      */
+    @Transactional
     public ProfilesDTO searchProfileTag(String profileTag) {
         Optional<Profiles> findProfileTag = profileRepository.findProfileByTag(profileTag);
-        return findProfileTag.map(profiles -> new ProfilesDTO(
-                profiles.getProfileId(),
-                profiles.getProfileName(),
-                profiles.getProfileBirthday(),
-                profiles.getProfileCreateAt(),
-                profiles.getProfileStatus(),
-                profiles.getProfileTag(),
-                null,
-                profiles.getProfileEmail(),
-                profiles.getProfilePhoneNumber(),
-                profiles.getProfileInstagram(),
-                profiles.getProfileLinkedin(),
-                profiles.getProfileOtherSocialMedia(),
-                profiles.getProfileImage(),
-                profiles.getProfileDescription(),
-                profiles.getProfileProfession(),
-                profiles.getProfileOccupationArea(),
-                profiles.getProfileCV(),
-                profiles.getProfileProfessionalExperiences(),
-                profiles.getProfileEducations(),
-                profiles.getProfileSkills(),
-                profiles.getProfileState(),
-                profiles.getProfileCity(),
-                profiles.getProfileAddress(),
-                profiles.getProfileGender()
-        )).orElse(null);
+        ImageUtils imageUtils = new ImageUtils();
+        return findProfileTag.map(profile -> {
+                return new ProfilesDTO(
+                        profile.getProfileId(),
+                        profile.getProfileName(),
+                        profile.getProfileBirthday(),
+                        profile.getProfileCreateAt(),
+                        profile.getProfileStatus(),
+                        profile.getProfileTag(),
+                        null,
+                        profile.getProfileEmail(),
+                        profile.getProfilePhoneNumber(),
+                        profile.getProfileInstagram(),
+                        profile.getProfileLinkedin(),
+                        profile.getProfileOtherSocialMedia(),
+                        downloadImage(profile.getProfileImage()),
+                        profile.getProfileDescription(),
+                        profile.getProfileProfession(),
+                        profile.getProfileOccupationArea(),
+                        profile.getProfileCV(),
+                        profile.getProfileProfessionalExperiences(),
+                        profile.getProfileEducations(),
+                        profile.getProfileSkills(),
+                        profile.getProfileState(),
+                        profile.getProfileCity(),
+                        profile.getProfileAddress(),
+                        profile.getProfileGender()
+                );
+        }).orElse(null);
 
     }
 
@@ -348,5 +341,15 @@ public class ProfilesService {
     public boolean validProfileBeforeUpdate(String profileEmail, String profileTag) {
         Profiles getExistingProfile = profileRepository.existingProfileBeforeUpdate(profileEmail, profileTag);
         return getExistingProfile != null;
+    }
+
+
+    @Transactional
+    public byte[] downloadImage(byte[] image) {
+        try {
+            return ImageUtils.decompressImage(image);
+        } catch (DataFormatException | IOException exception) {
+            throw new ContextedRuntimeException("Error downloading an image", exception);
+        }
     }
 }
