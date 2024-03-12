@@ -68,16 +68,15 @@ public class ProfilesService {
      * SAVE USERS BASED ON THE JSON RECEIVED AND VALIDATES IF THE USER ALREADY EXISTS BEFORE SAVING, IF IT EXISTS IT RETURNS NULL
      */
     @Transactional
-    public ProfilesDTO saveProfiles(Profiles profiles, MultipartFile profileImage) throws IOException {
+    public ProfilesDTO saveProfiles(Profiles profiles, MultipartFile profileImage, MultipartFile profileCV) throws IOException {
         Profiles validProfileExists = profileRepository.existsByProfileEmail(profiles.getProfileEmail());
         if(validProfileExists != null) return null;
-
-        ImageUtils imageUtils = new ImageUtils();
 
         profiles.setProfilePassword(encryptPassword(profiles.getProfilePassword()));
         profiles.setProfileTag(generateProfileTag(8));
 
-        profiles.setProfileImage(imageUtils.compressImage(profileImage.getBytes()));
+        profiles.setProfileImage(ImageUtils.compressImage(profileImage.getBytes()));
+        profiles.setProfileCV(ImageUtils.compressImage(profileCV.getBytes()));
 
         profileRepository.save(profiles);
 
@@ -164,11 +163,11 @@ public class ProfilesService {
                 profiles.getProfileInstagram(),
                 profiles.getProfileLinkedin(),
                 profiles.getProfileOtherSocialMedia(),
-                downloadImage(profiles.getProfileImage()),
+                profiles.getProfileImage() != null ? downloadImage(profiles.getProfileImage()) : null,
                 profiles.getProfileDescription(),
                 profiles.getProfileProfession(),
                 profiles.getProfileOccupationArea(),
-                profiles.getProfileCV(),
+                profiles.getProfileCV() != null ? downloadImage(profiles.getProfileCV()) : null,
                 profiles.getProfileProfessionalExperiences(),
                 profiles.getProfileEducations(),
                 profiles.getProfileSkills(),
@@ -274,11 +273,11 @@ public class ProfilesService {
                     findProfile.getProfileInstagram(), 
                     findProfile.getProfileLinkedin(), 
                     findProfile.getProfileOtherSocialMedia(),
-                    findProfile.getProfileImage(),
+                    downloadImage(findProfile.getProfileImage()),
                     findProfile.getProfileDescription(), 
                     findProfile.getProfileProfession(),
                     findProfile.getProfileOccupationArea(),
-                    findProfile.getProfileCV(), 
+                    downloadImage(findProfile.getProfileCV()),
                     findProfile.getProfileProfessionalExperiences(), 
                     findProfile.getProfileEducations(), 
                     findProfile.getProfileSkills(), 
@@ -300,7 +299,6 @@ public class ProfilesService {
     @Transactional
     public ProfilesDTO searchProfileTag(String profileTag) {
         Optional<Profiles> findProfileTag = profileRepository.findProfileByTag(profileTag);
-        ImageUtils imageUtils = new ImageUtils();
         return findProfileTag.map(profile -> {
                 return new ProfilesDTO(
                         profile.getProfileId(),
@@ -319,7 +317,7 @@ public class ProfilesService {
                         profile.getProfileDescription(),
                         profile.getProfileProfession(),
                         profile.getProfileOccupationArea(),
-                        profile.getProfileCV(),
+                        downloadImage(profile.getProfileCV()),
                         profile.getProfileProfessionalExperiences(),
                         profile.getProfileEducations(),
                         profile.getProfileSkills(),

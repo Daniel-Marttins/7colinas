@@ -28,6 +28,7 @@ public class ProfilesController {
     @RequestMapping(value = "/add", method = RequestMethod.POST)
     public ResponseEntity<?> addNewTalentProfile(
             @RequestPart("profileImage") MultipartFile profileImage,
+            @RequestPart("profileCV") MultipartFile profileCV,
             @RequestParam("profileName") String profileName,
             @RequestParam("profileBirthday") String profileBirthday,
             @RequestParam("profilePassword") String profilePassword,
@@ -49,7 +50,7 @@ public class ProfilesController {
         try {
             Profiles profile = new Profiles();
             profile.setProfileName(profileName);
-            profile.setProfileBirthday(new SimpleDateFormat("yyyy-MM-dd").parse(profileBirthday));
+            profile.setProfileBirthday(new SimpleDateFormat("MM/dd/yyyy").parse(profileBirthday));
             profile.setProfileCreateAt(Calendar.getInstance().getTime());
             profile.setProfileStatus("Ativo");
             profile.setProfilePassword(profilePassword);
@@ -67,8 +68,7 @@ public class ProfilesController {
             profile.setProfileCity(profileCity);
             profile.setProfileAddress(profileAddress);
             profile.setProfileGender(profileGender);
-
-            ProfilesDTO addProfile = profilesService.saveProfiles(profile, profileImage);
+            ProfilesDTO addProfile = profilesService.saveProfiles(profile, profileImage, profileCV);
             if (addProfile != null) return ResponseEntity.ok().body(addProfile);
             return ResponseEntity.badRequest().body("Um perfil com esse email, já existe no nosso banco de talentos!");
         } catch (Exception e) {
