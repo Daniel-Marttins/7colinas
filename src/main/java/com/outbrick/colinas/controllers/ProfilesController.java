@@ -105,33 +105,31 @@ public class ProfilesController {
 
     @RequestMapping(value = "/update", method = RequestMethod.PUT)
     public ResponseEntity<?> updateProfile(
-            @RequestPart("profileImage") MultipartFile profileImage,
-            @RequestPart("profileCV") MultipartFile profileCV,
-            @RequestParam("profileName") String profileName,
-            @RequestParam("profileTag") String profileTag,
-            @RequestParam("profileBirthday") String profileBirthday,
-            @RequestParam("profilePassword") String profilePassword,
-            @RequestParam("profileEmail") String profileEmail,
-            @RequestParam("profilePhoneNumber") String profilePhoneNumber,
-            @RequestParam("profileInstagram") String profileInstagram,
-            @RequestParam("profileLinkedin") String profileLinkedin,
-            @RequestParam("profileDescription") String profileDescription,
-            @RequestParam("profileProfession") String profileProfession,
-            @RequestParam("profileOccupationArea") String profileOccupationArea,
-            @RequestParam("profileProfessionalExperiences") List<String> profileProfessionalExperiences,
-            @RequestParam("profileEducations") List<String> profileEducations,
-            @RequestParam("profileSkills") List<String> profileSkills,
-            @RequestParam("profileState") String profileState,
-            @RequestParam("profileCity") String profileCity,
-            @RequestParam("profileAddress") String profileAddress,
-            @RequestParam("profileGender") String profileGender
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestPart(value = "profileCV", required = false) MultipartFile profileCV,
+            @RequestParam(value = "profileName", required = false) String profileName,
+            @RequestParam(value = "profileTag", required = false) String profileTag,
+            @RequestParam(value = "profileBirthday", required = false) String profileBirthday,
+            @RequestParam(value = "profileEmail", required = false) String profileEmail,
+            @RequestParam(value = "profilePhoneNumber", required = false) String profilePhoneNumber,
+            @RequestParam(value = "profileInstagram", required = false) String profileInstagram,
+            @RequestParam(value = "profileLinkedin", required = false) String profileLinkedin,
+            @RequestParam(value = "profileDescription", required = false) String profileDescription,
+            @RequestParam(value = "profileProfession", required = false) String profileProfession,
+            @RequestParam(value = "profileOccupationArea", required = false) String profileOccupationArea,
+            @RequestParam(value = "profileProfessionalExperiences", required = false) List<String> profileProfessionalExperiences,
+            @RequestParam(value = "profileEducations", required = false) List<String> profileEducations,
+            @RequestParam(value = "profileSkills",required = false) List<String> profileSkills,
+            @RequestParam(value = "profileState", required = false) String profileState,
+            @RequestParam(value = "profileCity", required = false) String profileCity,
+            @RequestParam(value = "profileAddress", required = false) String profileAddress,
+            @RequestParam(value = "profileGender", required = false) String profileGender
     ) throws ParseException {
         Profiles profile = new Profiles();
         profile.setProfileName(profileName);
-        profile.setProfileBirthday(new SimpleDateFormat("MM/dd/yyyy").parse(profileBirthday));
-        profile.setProfileCreateAt(Calendar.getInstance().getTime());
-        profile.setProfileStatus("Ativo");
-        profile.setProfilePassword(profilePassword);
+        if(profileBirthday != null) {
+            profile.setProfileBirthday(new SimpleDateFormat("MM/dd/yyyy").parse(profileBirthday));
+        }
         profile.setProfileEmail(profileEmail);
         profile.setProfilePhoneNumber(profilePhoneNumber);
         profile.setProfileInstagram(profileInstagram);
@@ -159,5 +157,12 @@ public class ProfilesController {
         );
         if(getProfileAfterUpdate.isPresent()) return ResponseEntity.ok().body(getProfileAfterUpdate);
         return ResponseEntity.badRequest().body("Não foi possivel atualizar senha!");
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteProfile(@RequestBody Map<String, String> profileTag) {
+        String tag = profileTag.get("profileTag");
+        profilesService.deleteProfileByTag(tag);
+        return ResponseEntity.ok().body("Perfil deletado!");
     }
 }

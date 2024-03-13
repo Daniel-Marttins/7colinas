@@ -228,16 +228,19 @@ public class ProfilesService {
                 record.setProfileName(updatedProfile.getProfileName());
                 record.setProfileBirthday(updatedProfile.getProfileBirthday());
                 record.setProfileStatus(updatedProfile.getProfileStatus());
-                record.setProfilePassword(encryptPassword(updatedProfile.getProfilePassword()));
                 record.setProfileEmail(updatedProfile.getProfileEmail());
                 record.setProfilePhoneNumber(updatedProfile.getProfilePhoneNumber());
                 record.setProfileInstagram(updatedProfile.getProfileInstagram());
                 record.setProfileLinkedin(updatedProfile.getProfileLinkedin());
                 record.setProfileOtherSocialMedia(updatedProfile.getProfileOtherSocialMedia());
-                record.setProfileImage(ImageUtils.compressImage(updatedProfile.getProfileImage()));
+                if (updatedProfile.getProfileImage() != null) {
+                    record.setProfileImage(ImageUtils.compressImage(updatedProfile.getProfileImage()));
+                }
                 record.setProfileDescription(updatedProfile.getProfileDescription());
                 record.setProfileProfession(updatedProfile.getProfileProfession());
-                record.setProfileCV(ImageUtils.compressImage(updatedProfile.getProfileCV()));
+                if (updatedProfile.getProfileCV() != null) {
+                    record.setProfileCV(ImageUtils.compressImage(updatedProfile.getProfileCV()));
+                }
                 record.setProfileProfessionalExperiences(updatedProfile.getProfileProfessionalExperiences());
                 record.setProfileEducations(updatedProfile.getProfileEducations());
                 record.setProfileSkills(updatedProfile.getProfileSkills());
@@ -276,11 +279,11 @@ public class ProfilesService {
                     findProfile.getProfileInstagram(), 
                     findProfile.getProfileLinkedin(), 
                     findProfile.getProfileOtherSocialMedia(),
-                    downloadImage(findProfile.getProfileImage()),
+                    findProfile.getProfileImage() != null ? downloadImage(findProfile.getProfileImage()) : null,
                     findProfile.getProfileDescription(), 
                     findProfile.getProfileProfession(),
                     findProfile.getProfileOccupationArea(),
-                    downloadImage(findProfile.getProfileCV()),
+                    findProfile.getProfileCV() != null ? downloadImage(findProfile.getProfileCV()) : null,
                     findProfile.getProfileProfessionalExperiences(), 
                     findProfile.getProfileEducations(), 
                     findProfile.getProfileSkills(), 
@@ -364,5 +367,10 @@ public class ProfilesService {
         } catch (DataFormatException | IOException exception) {
             throw new ContextedRuntimeException("Error downloading an image", exception);
         }
+    }
+
+
+    public void deleteProfileByTag(String profileTag) {
+        profileRepository.deleteByTag(profileTag);
     }
 }
