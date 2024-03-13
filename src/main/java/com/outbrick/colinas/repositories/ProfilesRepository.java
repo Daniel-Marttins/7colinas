@@ -16,6 +16,10 @@ public interface ProfilesRepository extends JpaRepository<Profiles, Long>{
     @Query(value = "SELECT * FROM PROFILES WHERE PROFILE_EMAIL = :EMAIL", nativeQuery = true)
     public Profiles existsByProfileEmail(@Param(value = "EMAIL") String profileEmail);
 
+    @Query(value = "SELECT * FROM PROFILES WHERE PROFILE_EMAIL = :EMAIL", nativeQuery = true)
+    public Optional<Profiles> getProfileByEmail(@Param(value = "EMAIL") String profileEmail);
+
+
     @Query(value = "SELECT * FROM PROFILES WHERE PROFILE_TAG = :TAG", nativeQuery = true)
     public Optional<Profiles> findProfileByTag(@Param(value = "TAG") String profileTag);
 

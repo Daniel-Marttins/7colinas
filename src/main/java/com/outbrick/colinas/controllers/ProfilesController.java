@@ -2,6 +2,7 @@ package com.outbrick.colinas.controllers;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -103,9 +104,60 @@ public class ProfilesController {
     }
 
     @RequestMapping(value = "/update", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateProfile(@RequestBody Profiles updatedProfile) {
-        ProfilesDTO getProfileAfterUpdate = profilesService.getUpdatedProfile(updatedProfile.getProfileTag(), updatedProfile);
+    public ResponseEntity<?> updateProfile(
+            @RequestPart("profileImage") MultipartFile profileImage,
+            @RequestPart("profileCV") MultipartFile profileCV,
+            @RequestParam("profileName") String profileName,
+            @RequestParam("profileTag") String profileTag,
+            @RequestParam("profileBirthday") String profileBirthday,
+            @RequestParam("profilePassword") String profilePassword,
+            @RequestParam("profileEmail") String profileEmail,
+            @RequestParam("profilePhoneNumber") String profilePhoneNumber,
+            @RequestParam("profileInstagram") String profileInstagram,
+            @RequestParam("profileLinkedin") String profileLinkedin,
+            @RequestParam("profileDescription") String profileDescription,
+            @RequestParam("profileProfession") String profileProfession,
+            @RequestParam("profileOccupationArea") String profileOccupationArea,
+            @RequestParam("profileProfessionalExperiences") List<String> profileProfessionalExperiences,
+            @RequestParam("profileEducations") List<String> profileEducations,
+            @RequestParam("profileSkills") List<String> profileSkills,
+            @RequestParam("profileState") String profileState,
+            @RequestParam("profileCity") String profileCity,
+            @RequestParam("profileAddress") String profileAddress,
+            @RequestParam("profileGender") String profileGender
+    ) throws ParseException {
+        Profiles profile = new Profiles();
+        profile.setProfileName(profileName);
+        profile.setProfileBirthday(new SimpleDateFormat("MM/dd/yyyy").parse(profileBirthday));
+        profile.setProfileCreateAt(Calendar.getInstance().getTime());
+        profile.setProfileStatus("Ativo");
+        profile.setProfilePassword(profilePassword);
+        profile.setProfileEmail(profileEmail);
+        profile.setProfilePhoneNumber(profilePhoneNumber);
+        profile.setProfileInstagram(profileInstagram);
+        profile.setProfileLinkedin(profileLinkedin);
+        profile.setProfileDescription(profileDescription);
+        profile.setProfileProfession(profileProfession);
+        profile.setProfileOccupationArea(profileOccupationArea);
+        profile.setProfileProfessionalExperiences(profileProfessionalExperiences);
+        profile.setProfileEducations(profileEducations);
+        profile.setProfileSkills(profileSkills);
+        profile.setProfileState(profileState);
+        profile.setProfileCity(profileCity);
+        profile.setProfileAddress(profileAddress);
+        profile.setProfileGender(profileGender);
+        ProfilesDTO getProfileAfterUpdate = profilesService.getUpdatedProfile(profileTag, profile, profileImage, profileCV);
         if(getProfileAfterUpdate != null) return ResponseEntity.ok().body(getProfileAfterUpdate);
         return ResponseEntity.badRequest().body("Não foi possivel atualizar este perfil, novo email já pertence a outro usuário");
-    }    
+    }
+
+    @RequestMapping(value = "/update/password", method = RequestMethod.PUT)
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> profilePasswordChange) {
+        Optional<Profiles> getProfileAfterUpdate = profilesService.updatePassword(
+                profilePasswordChange.get("profileEmail"),
+                profilePasswordChange.get("profilePassword")
+        );
+        if(getProfileAfterUpdate.isPresent()) return ResponseEntity.ok().body(getProfileAfterUpdate);
+        return ResponseEntity.badRequest().body("Não foi possivel atualizar senha!");
+    }
 }

@@ -12,8 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -183,11 +181,12 @@ public class ProfilesService {
      * CALLS THE UPDATE METHOD TO THEN CONVERT THE USER <OPTIONAL> INTO A DTO USER TO BE RETURNED
      * 
      */
-    public ProfilesDTO getUpdatedProfile(String profileTag, Profiles updatedProfile) {
+    @Transactional
+    public ProfilesDTO getUpdatedProfile(String profileTag, Profiles updatedProfile, MultipartFile profileImage, MultipartFile profileCV) {
         boolean validBeforeUpdate = validProfileBeforeUpdate(updatedProfile.getProfileEmail(), updatedProfile.getProfileTag());
         if (validBeforeUpdate) return null;
 
-        Optional<Profiles> getProfile = updateProfiles(profileTag, updatedProfile);
+        Optional<Profiles> getProfile = updateProfiles(profileTag, updatedProfile, profileImage, profileCV);
         return getProfile.map(profiles -> new ProfilesDTO(
                 profiles.getProfileId(),
                 profiles.getProfileName(),
@@ -201,11 +200,11 @@ public class ProfilesService {
                 profiles.getProfileInstagram(),
                 profiles.getProfileLinkedin(),
                 profiles.getProfileOtherSocialMedia(),
-                profiles.getProfileImage(),
+                profiles.getProfileImage() != null ? downloadImage(profiles.getProfileImage()) : null,
                 profiles.getProfileDescription(),
                 profiles.getProfileProfession(),
                 profiles.getProfileOccupationArea(),
-                profiles.getProfileCV(),
+                profiles.getProfileCV() != null ? downloadImage(profiles.getProfileCV()) : null,
                 profiles.getProfileProfessionalExperiences(),
                 profiles.getProfileEducations(),
                 profiles.getProfileSkills(),
@@ -221,31 +220,35 @@ public class ProfilesService {
      * METODO PAR ATUALIZAR O USUÁRIO, USANDO STREAM.MAP E RECORD PARA RETORNAR AO BANCO DE DADOS O USUÁRIO ATUALIZADO
      * METHOD TO UPDATE THE USER, USING STREAM.MAP AND RECORD TO RETURN THE UPDATED USER TO THE DATABASE
      */
-    public Optional<Profiles> updateProfiles(String profileTag, Profiles updatedProfile) {
+    @Transactional
+    public Optional<Profiles> updateProfiles(String profileTag, Profiles updatedProfile, MultipartFile profileImage, MultipartFile profileCV) {
         Optional<Profiles> existingProfile = profileRepository.findProfileByTag(profileTag);
         if(existingProfile.isPresent()) return existingProfile.map(record -> {
-            record.setProfileName(updatedProfile.getProfileName()); 
-            record.setProfileBirthday(updatedProfile.getProfileBirthday());
-            record.setProfileStatus(updatedProfile.getProfileStatus());
-            record.setProfilePassword(encryptPassword(updatedProfile.getProfilePassword()));
-            record.setProfileEmail(updatedProfile.getProfileEmail()); 
-            record.setProfilePhoneNumber(updatedProfile.getProfilePhoneNumber()); 
-            record.setProfileInstagram(updatedProfile.getProfileInstagram()); 
-            record.setProfileLinkedin(updatedProfile.getProfileLinkedin()); 
-            record.setProfileOtherSocialMedia(updatedProfile.getProfileOtherSocialMedia());
-            record.setProfileImage(updatedProfile.getProfileImage()); 
-            record.setProfileDescription(updatedProfile.getProfileDescription()); 
-            record.setProfileProfession(updatedProfile.getProfileProfession());
-            record.setProfileCV(updatedProfile.getProfileCV()); 
-            record.setProfileProfessionalExperiences(updatedProfile.getProfileProfessionalExperiences()); 
-            record.setProfileEducations(updatedProfile.getProfileEducations()); 
-            record.setProfileSkills(updatedProfile.getProfileSkills()); 
-            record.setProfileState(updatedProfile.getProfileState()); 
-            record.setProfileCity(updatedProfile.getProfileCity()); 
-            record.setProfileAddress(updatedProfile.getProfileAddress());
-            record.setProfileGender(updatedProfile.getProfileGender());
-            
-            return profileRepository.save(record);
+            try {
+                record.setProfileName(updatedProfile.getProfileName());
+                record.setProfileBirthday(updatedProfile.getProfileBirthday());
+                record.setProfileStatus(updatedProfile.getProfileStatus());
+                record.setProfilePassword(encryptPassword(updatedProfile.getProfilePassword()));
+                record.setProfileEmail(updatedProfile.getProfileEmail());
+                record.setProfilePhoneNumber(updatedProfile.getProfilePhoneNumber());
+                record.setProfileInstagram(updatedProfile.getProfileInstagram());
+                record.setProfileLinkedin(updatedProfile.getProfileLinkedin());
+                record.setProfileOtherSocialMedia(updatedProfile.getProfileOtherSocialMedia());
+                record.setProfileImage(ImageUtils.compressImage(updatedProfile.getProfileImage()));
+                record.setProfileDescription(updatedProfile.getProfileDescription());
+                record.setProfileProfession(updatedProfile.getProfileProfession());
+                record.setProfileCV(ImageUtils.compressImage(updatedProfile.getProfileCV()));
+                record.setProfileProfessionalExperiences(updatedProfile.getProfileProfessionalExperiences());
+                record.setProfileEducations(updatedProfile.getProfileEducations());
+                record.setProfileSkills(updatedProfile.getProfileSkills());
+                record.setProfileState(updatedProfile.getProfileState());
+                record.setProfileCity(updatedProfile.getProfileCity());
+                record.setProfileAddress(updatedProfile.getProfileAddress());
+                record.setProfileGender(updatedProfile.getProfileGender());
+                return profileRepository.save(record);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         });
         return Optional.empty();
     }
@@ -329,6 +332,18 @@ public class ProfilesService {
         }).orElse(null);
 
     }
+
+    @Transactional
+    public Optional<Profiles> updatePassword(String profileEmail, String profilePassword) {
+        Optional<Profiles> existingProfile = profileRepository.getProfileByEmail(profileEmail);
+        if(existingProfile.isPresent()) {
+            Profiles profileToUpdate = existingProfile.get();
+            profileToUpdate.setProfilePassword(encryptPassword(profilePassword));
+            return Optional.of(profileRepository.save(profileToUpdate));
+        }
+        return Optional.empty();
+    }
+
 
     /*
      * VERIFICA SE O USUÁRIO ATUALIZADO ESTÁ MUDANDO O EMAIL PARA OUTRO EMAIL QUE JÁ EXISTA CADASTRADO, CASO ISSO ACONTEÇA 
